@@ -94,7 +94,8 @@ let evaluated: Piece[] = parsed.map { (piece: Piece) in
     switch piece {
     case .CodeBlock("print-swift", let code):
         let result = evaluateSwift(swiftCode,code)
-        return Piece.Evaluated(code + "\n\n" + prefix(result,"> "))
+        let start = code.words.count == 1 ? "" : code + "\n\n"
+        return Piece.Evaluated(start + prefix(result,"> "))
     default:
       return piece
     }

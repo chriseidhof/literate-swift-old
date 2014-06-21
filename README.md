@@ -24,3 +24,5 @@ sort(Array(cities.keys))
 
 > [Berlin, London, Madrid]
 ```
+
+If the `print-swift` code-block contains a single word, then that word isn't printed.
