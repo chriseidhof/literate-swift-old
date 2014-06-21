@@ -92,7 +92,7 @@ let parsed: Piece[] = parseContents(contents!)
 let swiftCode = "\n".join(codeForLanguage("swift", pieces: parsed))
 let evaluated: Piece[] = parsed.map { (piece: Piece) in
     switch piece {
-    case .CodeBlock("eval-swift", let code):
+    case .CodeBlock("print-swift", let code):
         let result = evaluateSwift(swiftCode,code)
         return Piece.Evaluated(code + "\n\n" + prefix(result,"> "))
     default:

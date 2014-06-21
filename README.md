@@ -1,6 +1,6 @@
 This is a tool that helps you generate markdown from markdown.
 
-It works like this: all code in `swift` fenced code blocks is gathered and put into a swift file. Then, for each fenced code block with language `eval-swift`, the last eval statement is evaluated at the end of the swift code.
+It works like this: all code in `swift` fenced code blocks is gathered and put into a swift file. Then, for each fenced code block with language `print-swift`, the last eval statement is evaluated at the end of the swift code.
 
 For example, if you run `LiterateSwift` on this file:
 
@@ -13,14 +13,14 @@ let cities = ["London": 8308369
 
 And then the following expression
 
-```eval-swift
+```print-swift
 sort(Array(cities.keys))
 ```
 
 The above code-block will be replaced by:
 
 ```
-Array(cities.keys)
+sort(Array(cities.keys))
 
 > [Berlin, London, Madrid]
 ```
