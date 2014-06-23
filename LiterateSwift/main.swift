@@ -14,12 +14,25 @@ enum Piece {
     case Evaluated(String)
 }
 
-if Process.arguments.count != 2 {
+var arguments = Process.arguments
+
+if arguments.count < 2 {
     println("Expected a .md file as input")
     exit(-1)
+    
 }
 
-let filename = Process.arguments[1]
+let swift: Bool = {
+    if let idx = find(Process.arguments, "-swift") {
+        arguments.removeAtIndex(idx)
+        return true
+    }
+    return false
+}()
+
+
+let filename = arguments[1]
+
 
 func isFencedCodeBlock(s: String) -> Bool { return s.hasPrefix("```") }
 
@@ -71,9 +84,13 @@ func codeForLanguage(lang: String, #pieces: Piece[]) -> String[] {
 func evaluateSwift(code: String, expression: String) -> String {
     var expressionLines: String[] = expression.lines.filter { countElements($0) > 0 }
     let lastLine = expressionLines.removeLast()
-    let contents = "\n".join([code, "", "\n".join(expressionLines), "", "println(\(lastLine))"])
+    let shouldIncludeLet = expressionLines.filter { $0.hasPrefix("let result___ ") }.count == 0
+    let resultIs = shouldIncludeLet ? "let result___ = " : ""
+    let contents = "\n".join([code, "", "\n".join(expressionLines), "", "\(resultIs) \(lastLine)", "println(\"\\(result___)\")"])
+    
     let basename = NSUUID.UUID().UUIDString.stringByAppendingPathExtension("swift")
     let filename = "/tmp".stringByAppendingPathComponent(basename)
+    
     contents.writeToFile(filename)
     var arguments: String[] =  "--sdk macosx -r swift -i".words
     arguments += filename
@@ -94,11 +111,19 @@ let evaluated: Piece[] = parsed.map { (piece: Piece) in
     switch piece {
     case .CodeBlock("print-swift", let code):
         let result = evaluateSwift(swiftCode,code)
-        let start = code.words.count == 1 ? "" : code + "\n\n"
+        let filteredCode = unlines(code.lines.filter {!$0.hasPrefix("let result___") })
+        let shouldDisplayCode = code.words.count > 1 || contains(code.words[0],"(")
+        let start = shouldDisplayCode ? filteredCode + "\n\n" : ""
         return Piece.Evaluated(start + prefix(result,"> "))
+    case .CodeBlock("highlight-swift", let code):
+        return Piece.CodeBlock("swift", code)
     default:
       return piece
     }
 }
 
-println(prettyPrintContents(evaluated))
+if swift {
+  println(swiftCode)
+} else {
+  println(prettyPrintContents(evaluated))
+}

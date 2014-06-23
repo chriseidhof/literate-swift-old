@@ -237,6 +237,7 @@
 				8300FA1D1956015A00FE2C73 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
