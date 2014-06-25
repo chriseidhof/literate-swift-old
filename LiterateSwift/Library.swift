@@ -61,9 +61,9 @@ func exec(#commandPath: String, #workingDirectory: String?, #arguments: String[]
     let stdoutoutput : String = read(stdout)
     let stderroutput : String = read(stderr)
     if countElements(stderroutput) > 0 {
-//        println(<#object: T#>, &<#target: TargetStream#>)
-//        println("stdout: \(stdoutoutput)")
+        println("<!--")
         println("stderr: \(stderroutput)")
+        println("-->")
         
     }
     
