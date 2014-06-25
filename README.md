@@ -11,7 +11,7 @@ let cities = ["London": 8308369
              ]
 ```
 
-And then the following expression
+And then the following expression (if you're reading this on GitHub: please view the source)
 
 ```print-swift
 sort(Array(cities.keys))
@@ -23,6 +23,12 @@ The above code-block will be replaced by:
 sort(Array(cities.keys))
 
 > [Berlin, London, Madrid]
+```
+
+If you want to highlight swift code, but not have it executed by literate swift, specify `highlight-swift` as your languge:
+
+```highlight-swift
+removeAllFiles()
 ```
 
 If the `print-swift` code-block contains a single word, then that word isn't printed.
