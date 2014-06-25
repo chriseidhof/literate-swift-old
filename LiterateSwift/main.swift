@@ -107,7 +107,7 @@ func prefix(s: String, prefix: String) -> String {
 let contents = String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)
 let parsed: Piece[] = parseContents(contents!)
 let swiftCode = "\n".join(codeForLanguage("swift", pieces: parsed))
-let evaluated: Piece[] = parsed.map { (piece: Piece) in
+let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
     switch piece {
     case .CodeBlock("print-swift", let code):
         let result = evaluateSwift(swiftCode,code)
@@ -120,10 +120,11 @@ let evaluated: Piece[] = parsed.map { (piece: Piece) in
     default:
       return piece
     }
+    }
 }
 
 if swift {
   println(swiftCode)
 } else {
-  println(prettyPrintContents(evaluated))
+  println(prettyPrintContents(evaluate()))
 }
