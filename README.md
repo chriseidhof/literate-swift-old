@@ -1,4 +1,4 @@
-This is a tool that helps you generate markdown from markdown.
+This is a tool that helps you generate markdown from markdown. It's great when you're writing a presentation (for example, with [Deckset](http://www.decksetapp.com))
 
 It works like this: all code in `swift` fenced code blocks is gathered and put into a swift file. Then, for each fenced code block with language `print-swift`, the last eval statement is evaluated at the end of the swift code.
 
