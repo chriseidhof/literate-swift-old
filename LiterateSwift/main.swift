@@ -30,8 +30,16 @@ let swift: Bool = {
     return false
 }()
 
+let useStdIn : Bool = {
+    if let idx = find(Process.arguments, "-stdin") {
+        arguments.removeAtIndex(idx)
+        return true
+    }
+    return false
+}()
 
-let filename = arguments[1]
+
+let filename = useStdIn ? "" : arguments[1]
 
 
 func isFencedCodeBlock(s: String) -> Bool { return s.hasPrefix("```") }
@@ -104,8 +112,16 @@ func prefix(s: String, prefix: String) -> String {
     return unlines(s.lines.filter { countElements($0) > 0 } .map { prefix + $0 })
 }
 
-let contents = String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)
-let parsed: Piece[] = parseContents(contents!)
+let contents : String = {
+    if (useStdIn) {
+        let input = NSFileHandle.fileHandleWithStandardInput()!
+        let data: NSData = input.readDataToEndOfFile()!
+        return NSString(data:data, encoding:NSUTF8StringEncoding)
+    }
+    return String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)!
+}()
+
+let parsed: Piece[] = parseContents(contents)
 let swiftCode = "\n".join(codeForLanguage("swift", pieces: parsed))
 let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
     switch piece {
@@ -126,5 +142,6 @@ let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
 if swift {
   println(swiftCode)
 } else {
-  println(prettyPrintContents(evaluate()))
+  let result = prettyPrintContents(evaluate())
+  println(result)
 }

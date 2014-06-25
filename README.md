@@ -28,3 +28,5 @@ sort(Array(cities.keys))
 If the `print-swift` code-block contains a single word, then that word isn't printed.
 
 Also, there's an extra parameter `-swift` which will output only the swift code in fenced code blocks.
+
+If your run this with `-stdin`, the contents is read from STDIN instead of a file.
