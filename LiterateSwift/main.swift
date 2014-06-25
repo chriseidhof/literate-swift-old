@@ -85,7 +85,7 @@ func evaluateSwift(code: String, expression: String) -> String {
     var expressionLines: String[] = expression.lines.filter { countElements($0) > 0 }
     let lastLine = expressionLines.removeLast()
     let shouldIncludeLet = expressionLines.filter { $0.hasPrefix("let result___ ") }.count == 0
-    let resultIs = shouldIncludeLet ? "let result___ = " : ""
+    let resultIs = shouldIncludeLet ? "let result___ : Any = " : ""
     let contents = "\n".join([code, "", "\n".join(expressionLines), "", "\(resultIs) \(lastLine)", "println(\"\\(result___)\")"])
     
     let basename = NSUUID.UUID().UUIDString.stringByAppendingPathExtension("swift")
