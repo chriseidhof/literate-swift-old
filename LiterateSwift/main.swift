@@ -16,28 +16,26 @@ enum Piece {
 
 var arguments = Process.arguments
 
+NSFileManager.defaultManager().currentDirectoryPath
+
 if arguments.count < 2 {
     println("Expected a .md file as input")
     exit(-1)
     
 }
 
-let swift: Bool = {
-    if let idx = find(Process.arguments, "-swift") {
+func findArgument(name: String) -> Bool {
+    if let idx = find(arguments, "-" + name) {
         arguments.removeAtIndex(idx)
         return true
     }
     return false
-}()
+    
+}
 
-let useStdIn : Bool = {
-    if let idx = find(Process.arguments, "-stdin") {
-        arguments.removeAtIndex(idx)
-        return true
-    }
-    return false
-}()
-
+let swift = findArgument("swift")
+let useStdIn = findArgument("stdin")
+let stripHTML = findArgument("stripComments")
 
 let filename = useStdIn ? "" : arguments[1]
 
@@ -121,6 +119,8 @@ let contents : String = {
     return String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)!
 }()
 
+contents.writeToFile("~/Desktop/out.md".stringByExpandingTildeInPath)
+
 let parsed: Piece[] = parseContents(contents)
 let swiftCode = "\n".join(codeForLanguage("swift", pieces: parsed))
 let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
@@ -139,9 +139,18 @@ let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
     }
 }
 
+func stripHTMLComments(input: String) -> String {
+    // only remove comments with whitespace, otherwise it might be marked directives
+    let regex = NSRegularExpression.regularExpressionWithPattern("<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)
+    //if regex { println("Error: \(error)") }
+    let range = NSRange(0..countElements(input))
+    return regex.stringByReplacingMatchesInString(input, options: NSMatchingOptions(0), range: range, withTemplate: "")
+}
+
 if swift {
   println(swiftCode)
 } else {
   let result = prettyPrintContents(evaluate())
-  println(result)
+  let stripped = stripHTML ? stripHTMLComments(result) : result
+  println(stripped)
 }
