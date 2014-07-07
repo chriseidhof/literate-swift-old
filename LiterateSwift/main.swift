@@ -36,6 +36,7 @@ func findArgument(name: String) -> Bool {
 let swift = findArgument("swift")
 let useStdIn = findArgument("stdin")
 let stripHTML = findArgument("stripComments")
+let prepareForPlayground = findArgument("playground")
 
 let filename = useStdIn ? "" : arguments[1]
 
@@ -139,6 +140,21 @@ let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
     }
 }
 
+let playgroundPieces: () -> Piece[] = {
+    parsed.map { (piece: Piece) in
+        switch piece {
+        case .CodeBlock("print-swift", let code):
+            let filteredCode = unlines(code.lines.filter {!$0.hasPrefix("let result___") })
+            return Piece.CodeBlock("swift", filteredCode)
+        case .CodeBlock("highlight-swift", let code):
+            return Piece.CodeBlock("", code)
+        default:
+            return piece
+        }
+    }
+
+}
+
 func stripHTMLComments(input: String) -> String {
     // only remove comments with whitespace, otherwise it might be marked directives
     let regex = NSRegularExpression.regularExpressionWithPattern("<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)
@@ -149,6 +165,11 @@ func stripHTMLComments(input: String) -> String {
 
 if swift {
   println(swiftCode)
+} else if (prepareForPlayground) {
+    let result = prettyPrintContents(playgroundPieces())
+    let stripped = stripHTML ? stripHTMLComments(result) : result
+    println(stripped)
+    
 } else {
   let result = prettyPrintContents(evaluate())
   let stripped = stripHTML ? stripHTMLComments(result) : result
