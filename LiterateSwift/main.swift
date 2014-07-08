@@ -43,15 +43,15 @@ let filename = useStdIn ? "" : arguments[1]
 
 func isFencedCodeBlock(s: String) -> Bool { return s.hasPrefix("```") }
 
-func codeBlock(var lines: String[]) -> Piece? {
+func codeBlock(var lines: [String]) -> Piece? {
     if lines.count == 0 { return nil }
     let language = lines.removeAtIndex(0).substringFromIndex(3)
     return Piece.CodeBlock(language, "\n".join(lines))
 }
 
-func parseContents(input: String) -> Piece[] {
+func parseContents(input: String) -> [Piece] {
     var lines = input.lines
-    var result: Piece[] = []
+    var result: [Piece] = []
     while(lines.count > 0) {
         result += Piece.Text("\n".join(lines.removeUntil(isFencedCodeBlock)))
         if lines.count == 0 { break }
@@ -65,7 +65,7 @@ func parseContents(input: String) -> Piece[] {
     return result
 }
 
-func prettyPrintContents(pieces: Piece[]) -> String {
+func prettyPrintContents(pieces: [Piece]) -> String {
     var result = ""
     for piece in pieces {
         switch piece {
@@ -79,7 +79,7 @@ func prettyPrintContents(pieces: Piece[]) -> String {
     return result
 }
 
-func codeForLanguage(lang: String, #pieces: Piece[]) -> String[] {
+func codeForLanguage(lang: String, #pieces: [Piece]) -> [String] {
     return pieces.map {
         switch $0 {
         case .CodeBlock("swift", let code): return code
@@ -89,7 +89,7 @@ func codeForLanguage(lang: String, #pieces: Piece[]) -> String[] {
 }
 
 func evaluateSwift(code: String, expression: String) -> String {
-    var expressionLines: String[] = expression.lines.filter { countElements($0) > 0 }
+    var expressionLines: [String] = expression.lines.filter { countElements($0) > 0 }
     let lastLine = expressionLines.removeLast()
     let shouldIncludeLet = expressionLines.filter { $0.hasPrefix("let result___ ") }.count == 0
     let resultIs = shouldIncludeLet ? "let result___ : Any = " : ""
@@ -99,13 +99,13 @@ func evaluateSwift(code: String, expression: String) -> String {
     let filename = "/tmp".stringByAppendingPathComponent(basename)
     
     contents.writeToFile(filename)
-    var arguments: String[] =  "--sdk macosx -r swift -i".words
+    var arguments: [String] =  "--sdk macosx -r swift -i".words
     arguments += filename
     return exec(commandPath:"/usr/bin/xcrun", workingDirectory:filename.stringByDeletingLastPathComponent, arguments:arguments)
     
 }
 
-func unlines(lines: String[]) -> String { return "\n".join(lines) }
+func unlines(lines: [String]) -> String { return "\n".join(lines) }
 
 func prefix(s: String, prefix: String) -> String {
     return unlines(s.lines.filter { countElements($0) > 0 } .map { prefix + $0 })
@@ -122,9 +122,9 @@ let contents : String = {
 
 contents.writeToFile("~/Desktop/out.md".stringByExpandingTildeInPath)
 
-let parsed: Piece[] = parseContents(contents)
+let parsed: [Piece] = parseContents(contents)
 let swiftCode = "\n".join(codeForLanguage("swift", pieces: parsed))
-let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
+let evaluate: () -> [Piece] = { parsed.map { (piece: Piece) in
     switch piece {
     case .CodeBlock("print-swift", let code):
         let result = evaluateSwift(swiftCode,code)
@@ -140,7 +140,7 @@ let evaluate: () -> Piece[] = { parsed.map { (piece: Piece) in
     }
 }
 
-let playgroundPieces: () -> Piece[] = {
+let playgroundPieces: () -> [Piece] = {
     parsed.map { (piece: Piece) in
         switch piece {
         case .CodeBlock("print-swift", let code):
@@ -159,7 +159,7 @@ func stripHTMLComments(input: String) -> String {
     // only remove comments with whitespace, otherwise it might be marked directives
     let regex = NSRegularExpression.regularExpressionWithPattern("<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)
     //if regex { println("Error: \(error)") }
-    let range = NSRange(0..countElements(input))
+    let range = NSRange(0..<countElements(input))
     return regex.stringByReplacingMatchesInString(input, options: NSMatchingOptions(0), range: range, withTemplate: "")
 }
 

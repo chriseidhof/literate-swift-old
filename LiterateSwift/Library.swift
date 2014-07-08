@@ -9,11 +9,11 @@
 import Foundation
 
 extension String {
-    var lines: String[] {
+    var lines: [String] {
     return self.componentsSeparatedByCharactersInSet(NSCharacterSet.newlineCharacterSet())
     }
     
-    var words: String[] {
+    var words: [String] {
       return self.componentsSeparatedByCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
     }
     
@@ -23,8 +23,8 @@ extension String {
 }
 
 extension Array {
-    mutating func removeUntil(f: T -> Bool) -> T[] {
-        var removed: T[] = []
+    mutating func removeUntil(f: T -> Bool) -> [T] {
+        var removed: [T] = []
         for el in self {
             if f(el) {
                 break
@@ -32,7 +32,7 @@ extension Array {
                 removed += el
             }
         }
-        for i in 0..removed.count {
+        for i in 0..<removed.count {
             //            println("removing \(i) in \(self)")
             removeAtIndex(0)
         }
@@ -40,7 +40,7 @@ extension Array {
     }
 }
 
-func exec(#commandPath: String, #workingDirectory: String?, #arguments: String[]) -> String {
+func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]) -> String {
     let task = NSTask()
     task.currentDirectoryPath = workingDirectory
     task.launchPath = commandPath
