@@ -11,6 +11,16 @@
 		8300FA1F1956076A00FE2C73 /* Library.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8300FA1E1956076A00FE2C73 /* Library.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		8306A6EF196C506800EE4731 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8300FA0C1956015A00FE2C73 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8300FA131956015A00FE2C73;
+			remoteInfo = LiterateSwift;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		8300FA121956015A00FE2C73 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -27,6 +37,7 @@
 		8300FA141956015A00FE2C73 /* LiterateSwift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LiterateSwift; sourceTree = BUILT_PRODUCTS_DIR; };
 		8300FA171956015A00FE2C73 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8300FA1E1956076A00FE2C73 /* Library.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Library.swift; sourceTree = "<group>"; };
+		8306A6F1196C513800EE4731 /* InstallInBinDir.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = InstallInBinDir.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +70,7 @@
 		8300FA161956015A00FE2C73 /* LiterateSwift */ = {
 			isa = PBXGroup;
 			children = (
+				8306A6F1196C513800EE4731 /* InstallInBinDir.sh */,
 				8300FA171956015A00FE2C73 /* main.swift */,
 				8300FA1E1956076A00FE2C73 /* Library.swift */,
 			);
@@ -66,6 +78,24 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		8306A6EB196C506100EE4731 /* CopyToBin */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "${SRCROOT}/LiterateSwift/InstallInBinDir.sh";
+			buildConfigurationList = 8306A6EE196C506100EE4731 /* Build configuration list for PBXLegacyTarget "CopyToBin" */;
+			buildPhases = (
+			);
+			buildToolPath = /bin/bash;
+			buildWorkingDirectory = "";
+			dependencies = (
+				8306A6F0196C506800EE4731 /* PBXTargetDependency */,
+			);
+			name = CopyToBin;
+			passBuildSettingsInEnvironment = 1;
+			productName = CopyToBin;
+		};
+/* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
 		8300FA131956015A00FE2C73 /* LiterateSwift */ = {
@@ -97,6 +127,9 @@
 					8300FA131956015A00FE2C73 = {
 						CreatedOnToolsVersion = 6.0;
 					};
+					8306A6EB196C506100EE4731 = {
+						CreatedOnToolsVersion = 6.0;
+					};
 				};
 			};
 			buildConfigurationList = 8300FA0F1956015A00FE2C73 /* Build configuration list for PBXProject "LiterateSwift" */;
@@ -112,6 +145,7 @@
 			projectRoot = "";
 			targets = (
 				8300FA131956015A00FE2C73 /* LiterateSwift */,
+				8306A6EB196C506100EE4731 /* CopyToBin */,
 			);
 		};
 /* End PBXProject section */
@@ -127,6 +161,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8306A6F0196C506800EE4731 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8300FA131956015A00FE2C73 /* LiterateSwift */;
+			targetProxy = 8306A6EF196C506800EE4731 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		8300FA191956015A00FE2C73 /* Debug */ = {
@@ -218,6 +260,33 @@
 			};
 			name = Release;
 		};
+		8306A6EC196C506100EE4731 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		8306A6ED196C506100EE4731 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -238,6 +307,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		8306A6EE196C506100EE4731 /* Build configuration list for PBXLegacyTarget "CopyToBin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8306A6EC196C506100EE4731 /* Debug */,
+				8306A6ED196C506100EE4731 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
