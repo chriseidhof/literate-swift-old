@@ -16,7 +16,7 @@ enum Piece {
 
 var arguments = Process.arguments
 
-NSFileManager.defaultManager().currentDirectoryPath
+let cwd = NSFileManager.defaultManager().currentDirectoryPath
 
 if arguments.count < 2 {
     println("Expected a .md file as input")
@@ -101,6 +101,7 @@ func evaluateSwift(code: String, expression: String) -> String {
     contents.writeToFile(filename)
     var arguments: [String] =  "--sdk macosx -r swift -i".words
     arguments += filename
+    arguments += ["--", cwd]
     return exec(commandPath:"/usr/bin/xcrun", workingDirectory:filename.stringByDeletingLastPathComponent, arguments:arguments)
     
 }

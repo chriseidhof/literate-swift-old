@@ -315,6 +315,7 @@
 				8306A6ED196C506100EE4731 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
