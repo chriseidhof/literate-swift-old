@@ -82,7 +82,7 @@ func prettyPrintContents(pieces: [Piece]) -> String {
 func codeForLanguage(lang: String, #pieces: [Piece]) -> [String] {
     return pieces.map {
         switch $0 {
-        case .CodeBlock("swift", let code): return code
+        case .CodeBlock(let l, let code) where l == lang: return code
         default: return ""
         }
     }
@@ -123,8 +123,34 @@ let contents : String = {
 
 contents.writeToFile("~/Desktop/out.md".stringByExpandingTildeInPath)
 
+let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, error: nil)
+
+func pieceName(piece: String) -> (name: String, rest: String)? {
+    let firstLine : String = piece.lines[0]
+    if let match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range) {
+        let range = match.rangeAtIndex(1)
+        let name = firstLine.bridgeToObjectiveC().substringWithRange(range)
+        let rest = piece.lines[1..<piece.lines.count]
+        let contents = "\n".join(rest)
+        return (name: name, rest: contents)
+    }
+    return nil
+}
+
+func weave(pieces: [String]) -> [String] {
+    let dict : [String:String] = fromList(catMaybes(pieces.map(pieceName)))
+    let nonNamedPieces = pieces.filter { !pieceName($0) }
+    return nonNamedPieces.map { s in // todo: this could be optimized if needed.
+        var result = s
+        for (key,value) in dict {
+            result = result.stringByReplacingOccurrencesOfString("// =<<\(key)>>", withString: value, options: nil, range: nil)
+        }
+        return result
+    }
+}
+
 let parsed: [Piece] = parseContents(contents)
-let swiftCode = "\n".join(codeForLanguage("swift", pieces: parsed))
+let swiftCode = "\n".join(weave(codeForLanguage("swift", pieces: parsed)))
 let evaluate: () -> [Piece] = { parsed.map { (piece: Piece) in
     switch piece {
     case .CodeBlock("print-swift", let code):
@@ -135,6 +161,12 @@ let evaluate: () -> [Piece] = { parsed.map { (piece: Piece) in
         return Piece.Evaluated(start + prefix(result,"> "))
     case .CodeBlock("highlight-swift", let code):
         return Piece.CodeBlock("swift", code)
+    case .CodeBlock("swift", let code):
+        if let (name, code) = pieceName(code) {
+            return Piece.CodeBlock("swift", code)
+        } else {
+            return piece
+        }
     default:
       return piece
     }

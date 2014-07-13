@@ -40,6 +40,30 @@ extension Array {
     }
 }
 
+func catMaybes<T>(arr: [T?]) -> [T] {
+    var result : [T] = []
+    for el in arr {
+      if let val = el {
+        result += val
+      }
+    }
+    return result
+}
+
+func fromList<K: Hashable,V>(keysAndValues: [(K,V)]) -> Dictionary<K,V> {
+    var result = Dictionary<K,V>()
+    for (k,v) in keysAndValues {
+        result[k] = v
+    }
+    return result
+}
+
+extension String {
+    var range : NSRange {
+       return NSMakeRange(0, countElements(self))
+    }
+}
+
 func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]) -> String {
     let task = NSTask()
     task.currentDirectoryPath = workingDirectory
