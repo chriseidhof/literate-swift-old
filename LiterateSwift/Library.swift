@@ -64,7 +64,7 @@ extension String {
     }
 }
 
-func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]) -> String {
+func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]) -> (output: String, stderr: String) {
     let task = NSTask()
     task.currentDirectoryPath = workingDirectory
     task.launchPath = commandPath
@@ -84,14 +84,18 @@ func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]
     }
     let stdoutoutput : String = read(stdout)
     let stderroutput : String = read(stderr)
-    if countElements(stderroutput) > 0 {
-        println("<!--")
-        println("stderr: \(stderroutput)")
-        println("-->")
-        
-    }
     
     task.waitUntilExit()
     
-    return stdoutoutput
+    return (output: stdoutoutput, stderr: stderroutput)
+}
+
+func printstderr(s: String) {
+    NSFileHandle.fileHandleWithStandardError().writeData(s.dataUsingEncoding(NSUTF8StringEncoding))
+}
+
+func unlines(lines: [String]) -> String { return "\n".join(lines) }
+
+func prefix(s: String, prefix: String) -> String {
+    return unlines(s.lines.filter { countElements($0) > 0 } .map { prefix + $0 })
 }

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		8300FA181956015A00FE2C73 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8300FA171956015A00FE2C73 /* main.swift */; };
 		8300FA1F1956076A00FE2C73 /* Library.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8300FA1E1956076A00FE2C73 /* Library.swift */; };
+		832AFE9C1977F47800C09C77 /* LiterateSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832AFE9B1977F47800C09C77 /* LiterateSwift.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +39,7 @@
 		8300FA171956015A00FE2C73 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8300FA1E1956076A00FE2C73 /* Library.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Library.swift; sourceTree = "<group>"; };
 		8306A6F1196C513800EE4731 /* InstallInBinDir.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = InstallInBinDir.sh; sourceTree = "<group>"; };
+		832AFE9B1977F47800C09C77 /* LiterateSwift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiterateSwift.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +75,7 @@
 				8306A6F1196C513800EE4731 /* InstallInBinDir.sh */,
 				8300FA171956015A00FE2C73 /* main.swift */,
 				8300FA1E1956076A00FE2C73 /* Library.swift */,
+				832AFE9B1977F47800C09C77 /* LiterateSwift.swift */,
 			);
 			path = LiterateSwift;
 			sourceTree = "<group>";
@@ -155,6 +158,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				832AFE9C1977F47800C09C77 /* LiterateSwift.swift in Sources */,
 				8300FA181956015A00FE2C73 /* main.swift in Sources */,
 				8300FA1F1956076A00FE2C73 /* Library.swift in Sources */,
 			);
