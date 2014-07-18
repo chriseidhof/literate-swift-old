@@ -2,7 +2,7 @@ This is a tool that helps you generate markdown from markdown. It's great when y
 
 It works like this: all code in `swift` fenced code blocks is gathered and put into a swift file. Then, for each fenced code block with language `print-swift`, the last eval statement is evaluated at the end of the swift code.
 
-For example, if you run `LiterateSwift` on this file:
+For example, if you run `LiterateSwift` on a file that contains this fenced code block
 
     ```swift
     let cities = ["London": 8308369
@@ -11,13 +11,13 @@ For example, if you run `LiterateSwift` on this file:
                  ]
     ```
 
-And then the following expression (if you're reading this on GitHub: please view the source)
+And then the following fenced code block:
 
     ```print-swift
     sort(Array(cities.keys))
     ```
 
-The above code-block will be replaced by:
+The above block will be replaced by:
 
     ```
     sort(Array(cities.keys))
@@ -31,7 +31,7 @@ If you want to highlight swift code, but not have it executed by literate swift,
     removeAllFiles()
     ```
 
-If the `print-swift` code-block contains a single word, then that word isn't printed.
+If the `print-swift` code-block contains an expression that's only a single word, then that word isn't printed.
 
 Also, there's an extra parameter `-swift` which will output only the swift code in fenced code blocks.
 
