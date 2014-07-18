@@ -44,9 +44,7 @@ When evaluating code, the Swift interpret currently cares about the order of the
 
 ```highlight-swift
 let greeting = hello("Chris")
-```
 
-```highlight-swift
 func hello(x: String) -> String {
   return "Hello, " + x
 }
@@ -55,17 +53,15 @@ func hello(x: String) -> String {
 Instead, we can let the code be weaved (letting LiterateSwift shuffle it around), and write our example like this:
 
 
-    ```highlight-swift
-    // <<example1>>
-    let greeting = hello("Chris")
-    ```
-    
-    ```highlight-swift
-    func hello(x: String) -> String {
-      return "Hello, " + x
-    }
-    // =<<example1>>
-    ```
+```highlight-swift
+// <<example1>>
+let greeting = hello("Chris")
+
+func hello(x: String) -> String {
+  return "Hello, " + x
+}
+// =<<example1>>
+```
 
 Now, when evaluating the code, the entire first block will be cut out, and pasted at the place of `// =<example1>`. This allows you to present your code-blocks in a readable way, but still let the compiler verify that your code is working.
 
