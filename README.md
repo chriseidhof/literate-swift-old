@@ -42,25 +42,25 @@ If your run this with `-stdin`, the contents is read from STDIN instead of a fil
 When evaluating code, the Swift interpret currently cares about the order of the definitions. For example, the following code will not compile:
 
 
-    ```swift
-    let greeting = hello("Chris")
-    ```
-    
-    ```swift
-    func hello(x: String) -> String {
-      return "Hello, " + x
-    }
-    ```
+```highlight-swift
+let greeting = hello("Chris")
+```
+
+```highlight-swift
+func hello(x: String) -> String {
+  return "Hello, " + x
+}
+```
 
 Instead, we can let the code be weaved (letting LiterateSwift shuffle it around), and write our example like this:
 
 
-    ```swift
+    ```highlight-swift
     // <<example1>>
     let greeting = hello("Chris")
     ```
     
-    ```swift
+    ```highlight-swift
     func hello(x: String) -> String {
       return "Hello, " + x
     }
