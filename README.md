@@ -27,7 +27,7 @@ sort(Array(cities.keys))
 
 If you want to highlight swift code, but not have it executed by literate swift, specify `highlight-swift` as your languge:
 
-```highlight-swift
+```swift
 removeAllFiles()
 ```
 
@@ -42,7 +42,7 @@ If your run this with `-stdin`, the contents is read from STDIN instead of a fil
 When evaluating code, the Swift interpret currently cares about the order of the definitions. For example, the following code will not compile:
 
 
-```highlight-swift
+```swift
 let greeting = hello("Chris")
 
 func hello(x: String) -> String {
@@ -53,7 +53,7 @@ func hello(x: String) -> String {
 Instead, we can let the code be weaved (letting LiterateSwift shuffle it around), and write our example like this:
 
 
-```highlight-swift
+```swift
 // <<example1>>
 let greeting = hello("Chris")
 
