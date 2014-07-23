@@ -18,7 +18,8 @@ func isFencedCodeBlock(s: String) -> Bool { return s.hasPrefix("```") }
 
 func codeBlock(var lines: [String]) -> Piece? {
     if lines.count == 0 { return nil }
-    let language = lines.removeAtIndex(0).substringFromIndex(3)
+    let firstLine : NSString = lines.removeAtIndex(0)
+    let language = firstLine.substringFromIndex(3)
     return Piece.CodeBlock(language, "\n".join(lines))
 }
 
