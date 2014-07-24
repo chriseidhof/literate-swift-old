@@ -40,6 +40,13 @@ extension Array {
     }
 }
 
+func flatMap<A, B>(t: A?, f: A -> B?) -> B? {
+    if let x = t {
+        return f(x)
+    }
+    return nil
+}
+
 func catMaybes<T>(arr: [T?]) -> [T] {
     var result : [T] = []
     for el in arr {

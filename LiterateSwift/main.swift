@@ -42,16 +42,16 @@ let contents : String = {
 }()
 
 let parsed: [Piece] = parseContents(contents)
-let swiftCode = "\n".join(weave(codeForLanguage("swift", pieces: parsed)))
+let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed)))
 
 if swift {
   println(swiftCode)
 } else if (prepareForPlayground) {
-  let result = prettyPrintContents(playgroundPieces(parsed))
+  let result = prettyPrintContents(playgroundPieces(weave(parsed)))
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
 } else {
-    let cwd = NSFileManager.defaultManager().currentDirectoryPath
+  let cwd = NSFileManager.defaultManager().currentDirectoryPath
   let result = prettyPrintContents(evaluate(parsed, workingDirectory: cwd))
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)

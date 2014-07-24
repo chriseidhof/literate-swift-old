@@ -95,15 +95,39 @@ func pieceName(piece: String) -> (name: String, rest: String)? {
     return nil
 }
 
-func weave(pieces: [String]) -> [String] {
-    let dict : [String:String] = fromList(catMaybes(pieces.map(pieceName)))
-    let nonNamedPieces = pieces.filter { !pieceName($0) }
-    return nonNamedPieces.map { s in // todo: this could be optimized if needed.
-        var result = s
-        for (key,value) in dict {
-            result = result.stringByReplacingOccurrencesOfString("// =<<\(key)>>", withString: value, options: nil, range: nil)
+func code(piece: Piece) -> String? {
+    switch piece {
+    case .CodeBlock(_, let code): return code
+    default: return nil
+    }
+}
+
+operator infix |> { associativity left }
+
+func |> <A, B, C>(func1: B -> C, func2: A -> B) -> (A -> C) {
+    return { func1(func2($0)) }
+}
+
+func weave(pieces: [Piece]) -> [Piece] {
+    let name = { piece in
+        flatMap(code(piece), pieceName)
+    }
+    let dict : [String:String] = fromList(catMaybes(pieces.map(name)))
+    return pieces.map { piece in
+        switch piece {
+        case .CodeBlock(let language, let code):
+            if let name = pieceName(code) {
+                return .CodeBlock(language, "")
+            } else {
+                var result = code
+                for (key,value) in dict {
+                    result = result.stringByReplacingOccurrencesOfString("// =<<\(key)>>", withString: value, options: nil, range: nil)
+                }
+                return .CodeBlock(language, result)
+            }
+        default:
+            return piece
         }
-        return result
     }
 }
 
