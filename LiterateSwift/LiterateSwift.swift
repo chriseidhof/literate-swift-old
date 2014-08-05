@@ -27,11 +27,11 @@ func parseContents(input: String) -> [Piece] {
     var lines = input.lines
     var result: [Piece] = []
     while(lines.count > 0) {
-        result += Piece.Text("\n".join(lines.removeUntil(isFencedCodeBlock)))
+        result.append(Piece.Text("\n".join(lines.removeUntil(isFencedCodeBlock))))
         if lines.count == 0 { break }
         let marker = lines.removeAtIndex(0) // code block marker
         if let code = codeBlock([marker] + lines.removeUntil(isFencedCodeBlock)) {
-            result += code
+            result.append(code)
         }
         
         if lines.count > 0 {lines.removeAtIndex(0)} // The current fenced codeblock marker
@@ -74,7 +74,7 @@ func evaluateSwift(code: String, #expression: String, #workingDirectory: String)
     
     contents.writeToFile(filename)
     var arguments: [String] =  "--sdk macosx -r swift -i".words
-    arguments += filename
+    arguments.append(filename)
     arguments += ["--", workingDirectory]
     let (stdout, stderr) = exec(commandPath:"/usr/bin/xcrun", workingDirectory:filename.stringByDeletingLastPathComponent, arguments:arguments)
     printstderr(stderr)
@@ -87,7 +87,7 @@ func pieceName(piece: String) -> (name: String, rest: String)? {
     let firstLine : String = piece.lines[0]
     if let match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range) {
         let range = match.rangeAtIndex(1)
-        let name = firstLine.bridgeToObjectiveC().substringWithRange(range)
+        let name = (firstLine as NSString).substringWithRange(range)
         let rest = piece.lines[1..<piece.lines.count]
         let contents = "\n".join(rest)
         return (name: name, rest: contents)
@@ -102,7 +102,7 @@ func code(piece: Piece) -> String? {
     }
 }
 
-operator infix |> { associativity left }
+infix operator  |> { associativity left }
 
 func |> <A, B, C>(func1: B -> C, func2: A -> B) -> (A -> C) {
     return { func1(func2($0)) }

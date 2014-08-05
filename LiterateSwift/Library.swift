@@ -29,7 +29,7 @@ extension Array {
             if f(el) {
                 break
             } else {
-                removed += el
+                removed.append(el)
             }
         }
         for i in 0..<removed.count {
@@ -51,7 +51,7 @@ func catMaybes<T>(arr: [T?]) -> [T] {
     var result : [T] = []
     for el in arr {
       if let val = el {
-        result += val
+        result.append(val)
       }
     }
     return result
