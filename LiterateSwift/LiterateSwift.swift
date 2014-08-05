@@ -73,7 +73,7 @@ func evaluateSwift(code: String, #expression: String, #workingDirectory: String)
     let filename = "/tmp".stringByAppendingPathComponent(basename)
     
     contents.writeToFile(filename)
-    var arguments: [String] =  "--sdk macosx -r swift -i".words
+    var arguments: [String] =  "--sdk macosx -r swift".words
     arguments.append(filename)
     arguments += ["--", workingDirectory]
     let (stdout, stderr) = exec(commandPath:"/usr/bin/xcrun", workingDirectory:filename.stringByDeletingLastPathComponent, arguments:arguments)
