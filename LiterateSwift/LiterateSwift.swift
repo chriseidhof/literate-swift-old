@@ -86,11 +86,14 @@ let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, er
 func pieceName(piece: String) -> (name: String, rest: String)? {
     let firstLine : String = piece.lines[0]
     let match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range)
-        let range = match.rangeAtIndex(1)
+    let range = match.rangeAtIndex(1)
+    if range.length > 0 {
         let name = (firstLine as NSString).substringWithRange(range)
         let rest = piece.lines[1..<piece.lines.count]
         let contents = "\n".join(rest)
         return (name: name, rest: contents)
+    }
+    return nil
 }
 
 func code(piece: Piece) -> String? {
@@ -114,7 +117,7 @@ func weave(pieces: [Piece]) -> [Piece] {
     return pieces.map { piece in
         switch piece {
         case .CodeBlock(let language, let code):
-            if let name = pieceName(code) {
+            if let (name,_) = pieceName(code) {
                 return .CodeBlock(language, "")
             } else {
                 var result = code
