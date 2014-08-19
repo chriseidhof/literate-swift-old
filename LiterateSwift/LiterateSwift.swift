@@ -82,6 +82,7 @@ func evaluateSwift(code: String, #expression: String, #workingDirectory: String)
 }
 
 let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, error: nil)
+let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: nil, error: nil)
 
 func pieceName(piece: String) -> (name: String, rest: String)? {
     let firstLine : String = piece.lines[0]
@@ -103,6 +104,14 @@ func code(piece: Piece) -> String? {
     }
 }
 
+func expansions(code: String) -> [String] {
+    let nsStringCode : NSString = code
+    let matches = expansionRegex.matchesInString(code, options: nil, range: code.range) as [NSTextCheckingResult]
+    return matches.map { match in
+        nsStringCode.substringWithRange(match.rangeAtIndex(1))
+    }
+}
+
 infix operator  |> { associativity left }
 
 func |> <A, B, C>(func1: B -> C, func2: A -> B) -> (A -> C) {
@@ -114,11 +123,26 @@ func weave(pieces: [Piece]) -> [Piece] {
         flatMap(code(piece), pieceName)
     }
     let dict : [String:String] = fromList(catMaybes(pieces.map(name)))
+
+    let usedNames : [String] = flatMap(pieces) { piece in
+        switch piece {
+        case .CodeBlock(_, let code):
+            return expansions(code)
+        default:
+            return []
+        }
+    }
+    let usedNamesDict = fromList(usedNames.map { ($0,1) })
+
     return pieces.map { piece in
         switch piece {
         case .CodeBlock(let language, let code):
-            if let (name,_) = pieceName(code) {
-                return .CodeBlock(language, "")
+            if let (name, rest) = pieceName(code) {
+                if usedNamesDict[name] == nil {
+                    return .CodeBlock(language, rest)
+                } else {
+                    return .CodeBlock(language, "")
+                }
             } else {
                 var result = code
                 for (key,value) in dict {
