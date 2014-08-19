@@ -71,7 +71,7 @@ extension String {
     }
 }
 
-func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]) -> (output: String, stderr: String) {
+func exec(#commandPath: String, #workingDirectory: String, #arguments: [String]) -> (output: String, stderr: String) {
     let task = NSTask()
     task.currentDirectoryPath = workingDirectory
     task.launchPath = commandPath
@@ -98,7 +98,7 @@ func exec(#commandPath: String, #workingDirectory: String?, #arguments: [String]
 }
 
 func printstderr(s: String) {
-    NSFileHandle.fileHandleWithStandardError().writeData(s.dataUsingEncoding(NSUTF8StringEncoding))
+    NSFileHandle.fileHandleWithStandardError().writeData(s.dataUsingEncoding(NSUTF8StringEncoding)!)
 }
 
 func unlines(lines: [String]) -> String { return "\n".join(lines) }

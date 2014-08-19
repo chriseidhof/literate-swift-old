@@ -32,8 +32,8 @@ let prepareForPlayground = findArgument("playground")
 
 let contents : String = {
     if (useStdIn) {
-        let input = NSFileHandle.fileHandleWithStandardInput()!
-        let data: NSData = input.readDataToEndOfFile()!
+        let input = NSFileHandle.fileHandleWithStandardInput()
+        let data: NSData = input.readDataToEndOfFile()
         return NSString(data:data, encoding:NSUTF8StringEncoding)
     } else {
         let filename = useStdIn ? "" : arguments[1]

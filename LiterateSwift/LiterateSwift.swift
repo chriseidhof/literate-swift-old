@@ -70,7 +70,7 @@ func evaluateSwift(code: String, #expression: String, #workingDirectory: String)
     let contents = "\n".join([code, "", "\n".join(expressionLines), "", "\(resultIs) \(lastLine)", "println(\"\\(result___)\")"])
     
     let basename = NSUUID.UUID().UUIDString.stringByAppendingPathExtension("swift")
-    let filename = "/tmp".stringByAppendingPathComponent(basename)
+    let filename = "/tmp".stringByAppendingPathComponent(basename!)
     
     contents.writeToFile(filename)
     var arguments: [String] =  "--sdk macosx -r swift".words
@@ -85,14 +85,12 @@ let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, er
 
 func pieceName(piece: String) -> (name: String, rest: String)? {
     let firstLine : String = piece.lines[0]
-    if let match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range) {
+    let match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range)
         let range = match.rangeAtIndex(1)
         let name = (firstLine as NSString).substringWithRange(range)
         let rest = piece.lines[1..<piece.lines.count]
         let contents = "\n".join(rest)
         return (name: name, rest: contents)
-    }
-    return nil
 }
 
 func code(piece: Piece) -> String? {
@@ -133,32 +131,39 @@ func weave(pieces: [Piece]) -> [Piece] {
 
 func stripHTMLComments(input: String) -> String {
     // only remove comments with whitespace, otherwise it might be marked directives
-    let regex = NSRegularExpression.regularExpressionWithPattern("<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)
+    let regex = NSRegularExpression.regularExpressionWithPattern("<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)!
     //if regex { println("Error: \(error)") }
     let range = NSRange(0..<countElements(input))
     return regex.stringByReplacingMatchesInString(input, options: NSMatchingOptions(0), range: range, withTemplate: "")
 }
 
+func flatMap<A,B>(array: [A], f: A -> [B]) -> [B] {
+    var result : [B] = []
+    for x in array {
+        result += f(x)
+    }
+    return result
+}
 
 func evaluate(parsed: [Piece], #workingDirectory: String) -> [Piece] {
-    return parsed.map { (piece: Piece) in
+    return flatMap(parsed) { (piece: Piece) in
         switch piece {
         case .CodeBlock("print-swift", let code):
             let result = evaluateSwift(swiftCode,expression: code,workingDirectory: workingDirectory)
             let filteredCode = unlines(code.lines.filter {!$0.hasPrefix("let result___") })
             let shouldDisplayCode = code.words.count > 1 || contains(code.words[0],"(")
-            let start = shouldDisplayCode ? filteredCode + "\n\n" : ""
-            return Piece.Evaluated(start + prefix(result,"> "))
+            let start = shouldDisplayCode ? [Piece.CodeBlock("swift", filteredCode)] : []
+            return start + [Piece.Evaluated(prefix(result,"> "))]
         case .CodeBlock("highlight-swift", let code):
-            return Piece.CodeBlock("swift", code)
+            return [Piece.CodeBlock("swift", code)]
         case .CodeBlock("swift", let code):
             if let (name, code) = pieceName(code) {
-                return Piece.CodeBlock("swift", code)
+                return [Piece.CodeBlock("swift", code)]
             } else {
-                return piece
+                return [piece]
             }
         default:
-            return piece
+            return [piece]
         }
     }
 }
