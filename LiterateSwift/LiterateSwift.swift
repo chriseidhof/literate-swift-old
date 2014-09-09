@@ -8,10 +8,18 @@
 
 import Foundation
 
-enum Piece {
+enum Piece : Printable {
     case Text(String)
     case CodeBlock(String,String)
     case Evaluated(String)
+
+    var description : String {
+        switch self {
+        case .Text(let s): return "Text(\(s))"
+        case .CodeBlock(let lang, let code): return "Code(\(lang), \(code))"
+        case .Evaluated(let evaluated): return "Evaluated(\(evaluated))"
+        }
+    }
 }
 
 func isFencedCodeBlock(s: String) -> Bool { return s.hasPrefix("```") }
@@ -69,7 +77,7 @@ func evaluateSwift(code: String, #expression: String, #workingDirectory: String)
     let resultIs = shouldIncludeLet ? "let result___ : Any = " : ""
     let contents = "\n".join([code, "", "\n".join(expressionLines), "", "\(resultIs) \(lastLine)", "println(\"\\(result___)\")"])
     
-    let basename = NSUUID.UUID().UUIDString.stringByAppendingPathExtension("swift")
+    let basename = NSUUID().UUIDString.stringByAppendingPathExtension("swift")
     let filename = "/tmp".stringByAppendingPathComponent(basename!)
     
     contents.writeToFile(filename)
@@ -87,14 +95,19 @@ let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: ni
 func pieceName(piece: String) -> (name: String, rest: String)? {
     let firstLine : String = piece.lines[0]
     let match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range)
-    let range = match.rangeAtIndex(1)
-    if range.length > 0 {
-        let name = (firstLine as NSString).substringWithRange(range)
-        let rest = piece.lines[1..<piece.lines.count]
-        let contents = "\n".join(rest)
-        return (name: name, rest: contents)
+    if let range = match?.rangeAtIndex(1) {
+        if range.length > 0 {
+            let name = (firstLine as NSString).substringWithRange(range)
+            let rest = piece.lines[1..<piece.lines.count]
+            let contents = "\n".join(rest)
+            return (name: name, rest: contents)
+        }
     }
     return nil
+}
+
+func hasName(piece: String) -> Bool {
+    return pieceName(piece) != nil
 }
 
 func code(piece: Piece) -> String? {
@@ -123,7 +136,10 @@ func weave(pieces: [Piece]) -> [Piece] {
         flatMap(code(piece), pieceName)
     }
     let dict : [String:String] = fromList(catMaybes(pieces.map(name)))
+    return weave(pieces, dict)
+}
 
+func weave(pieces: [Piece], dict: [String:String]) -> [Piece] {
     let usedNames : [String] = flatMap(pieces) { piece in
         switch piece {
         case .CodeBlock(_, let code):

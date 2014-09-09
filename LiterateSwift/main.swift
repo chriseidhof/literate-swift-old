@@ -29,6 +29,11 @@ let swift = findArgument("swift")
 let useStdIn = findArgument("stdin")
 let stripHTML = findArgument("stripComments")
 let prepareForPlayground = findArgument("playground")
+let standardLibrary = findArgument("stdlib")
+
+func readFile(filename : String) -> String {
+    return String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)!
+}
 
 let contents : String = {
     if (useStdIn) {
@@ -37,12 +42,13 @@ let contents : String = {
         return NSString(data:data, encoding:NSUTF8StringEncoding)
     } else {
         let filename = useStdIn ? "" : arguments[1]
-        return String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)!
+        return readFile(filename)
     }
 }()
 
 let parsed: [Piece] = parseContents(contents)
 let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed)))
+
 
 if swift {
   println(swiftCode)
@@ -50,6 +56,13 @@ if swift {
   let result = prettyPrintContents(playgroundPieces(weave(parsed)))
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
+} else if (standardLibrary) {
+    arguments.removeAtIndex(0)
+    let allPieces = arguments.flatMap { filename in
+        parseContents(readFile(filename))
+    }
+    let allNamedCode = fromList(catMaybes(catMaybes(allPieces.map(code)).map(pieceName)))
+    println(prettyPrintContents(weave(parsed,allNamedCode)))
 } else {
   let cwd = NSFileManager.defaultManager().currentDirectoryPath
   let result = prettyPrintContents(evaluate(parsed, workingDirectory: cwd))

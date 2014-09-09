@@ -38,6 +38,10 @@ extension Array {
         }
         return removed
     }
+    
+    func flatMap<R>(f: T -> [R]) -> [R] {
+        return self.map(f).reduce([], combine: +)
+    }
 }
 
 func flatMap<A, B>(t: A?, f: A -> B?) -> B? {
