@@ -10,10 +10,10 @@ import Foundation
 
 var arguments = Process.arguments
 
-//let cwd =
+let programName = arguments.removeAtIndex(0)
 
-if arguments.count < 2 {
-    println("Expected a .md file as input")
+if arguments.count < 1 {
+    println("Expected a .md file as input, or -stdin as flag")
     exit(-1)
 }
 
@@ -41,28 +41,26 @@ let contents : String = {
         let data: NSData = input.readDataToEndOfFile()
         return NSString(data:data, encoding:NSUTF8StringEncoding)
     } else {
-        let filename = useStdIn ? "" : arguments[1]
+        let filename = arguments[0]
         return readFile(filename)
     }
 }()
 
+let allPieces = arguments.flatMap { filename in
+    parseContents(readFile(filename))
+}
+let allNamedCode = fromList(catMaybes(catMaybes(allPieces.map(code)).map(pieceName)))
 let parsed: [Piece] = parseContents(contents)
-let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed)))
-
 
 if swift {
+  let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed)))
   println(swiftCode)
 } else if (prepareForPlayground) {
-  let result = prettyPrintContents(playgroundPieces(weave(parsed)))
+  let result = prettyPrintContents(playgroundPieces(weave(parsed, allNamedCode)))
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
 } else if (standardLibrary) {
-    arguments.removeAtIndex(0)
-    let allPieces = arguments.flatMap { filename in
-        parseContents(readFile(filename))
-    }
-    let allNamedCode = fromList(catMaybes(catMaybes(allPieces.map(code)).map(pieceName)))
-    println(prettyPrintContents(weave(parsed,allNamedCode)))
+  println(prettyPrintContents(weave(parsed,allNamedCode)))
 } else {
   let cwd = NSFileManager.defaultManager().currentDirectoryPath
   let result = prettyPrintContents(evaluate(parsed, workingDirectory: cwd))

@@ -192,7 +192,7 @@ func evaluate(parsed: [Piece], #workingDirectory: String) -> [Piece] {
     return flatMap(parsed) { (piece: Piece) in
         switch piece {
         case .CodeBlock("print-swift", let code):
-            let result = evaluateSwift(swiftCode,expression: code,workingDirectory: workingDirectory)
+            let result = evaluateSwift(code,expression: code, workingDirectory: workingDirectory)
             let filteredCode = unlines(code.lines.filter {!$0.hasPrefix("let result___") })
             let shouldDisplayCode = code.words.count > 1 || contains(code.words[0],"(")
             let start = shouldDisplayCode ? [Piece.CodeBlock("swift", filteredCode)] : []
