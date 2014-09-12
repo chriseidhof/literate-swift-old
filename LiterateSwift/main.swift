@@ -41,19 +41,18 @@ let contents : String = {
         let data: NSData = input.readDataToEndOfFile()
         return NSString(data:data, encoding:NSUTF8StringEncoding)
     } else {
-        let filename = arguments[0]
-        return readFile(filename)
+        return readFile(arguments[0])
     }
 }()
 
-let allPieces = arguments.flatMap { filename in
+let parsed: [Piece] = parseContents(contents)
+let allPieces = parsed + arguments.flatMap { filename in
     parseContents(readFile(filename))
 }
 let allNamedCode = fromList(catMaybes(catMaybes(allPieces.map(code)).map(pieceName)))
-let parsed: [Piece] = parseContents(contents)
 
 if swift {
-  let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed)))
+  let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
   println(swiftCode)
 } else if (prepareForPlayground) {
   let result = prettyPrintContents(playgroundPieces(weave(parsed, allNamedCode)))
