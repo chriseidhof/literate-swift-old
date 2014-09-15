@@ -77,16 +77,22 @@ func evaluateSwift(code: String, #expression: String, #workingDirectory: String)
     let resultIs = shouldIncludeLet ? "let result___ : Any = " : ""
     let contents = "\n".join([code, "", "\n".join(expressionLines), "", "\(resultIs) \(lastLine)", "println(\"\\(result___)\")"])
     
-    let basename = NSUUID().UUIDString.stringByAppendingPathExtension("swift")
+    let base = NSUUID().UUIDString
+    let basename = base.stringByAppendingPathExtension("swift")
     let filename = "/tmp".stringByAppendingPathComponent(basename!)
     
     contents.writeToFile(filename)
-    var arguments: [String] =  "--sdk macosx -r swift".words
-    arguments.append(filename)
-    arguments += ["--", workingDirectory]
-    let (stdout, stderr) = exec(commandPath:"/usr/bin/xcrun", workingDirectory:filename.stringByDeletingLastPathComponent, arguments:arguments)
+    var arguments: [String] =  "--sdk macosx swiftc".words
+    let objectName = base.stringByAppendingPathExtension("o")!
+    ignoreOutputAndPrintStdErr(exec(commandPath:"/usr/bin/xcrun", workingDirectory:"/tmp", arguments:arguments + ["-c", filename]))
+    ignoreOutputAndPrintStdErr(exec(commandPath: "/usr/bin/xcrun", workingDirectory: "/tmp", arguments: arguments + ["-o", "app", objectName]))
+    let (stdout, stderr) = exec(commandPath: "/tmp/app", workingDirectory: workingDirectory, arguments: [workingDirectory])
     printstderr(stderr)
     return stdout
+}
+
+func ignoreOutputAndPrintStdErr(input: (output: String,stderr: String)) -> () {
+    printstderr(input.stderr)
 }
 
 let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, error: nil)
