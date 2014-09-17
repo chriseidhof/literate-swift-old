@@ -32,24 +32,26 @@ let prepareForPlayground = findArgument("playground")
 let standardLibrary = findArgument("stdlib")
 
 func readFile(filename : String) -> String {
-    return String.stringWithContentsOfFile(filename, encoding: NSUTF8StringEncoding, error: nil)!
+    return String(contentsOfFile: filename, encoding: NSUTF8StringEncoding, error: nil)!
 }
 
 let contents : String = {
     if (useStdIn) {
         let input = NSFileHandle.fileHandleWithStandardInput()
         let data: NSData = input.readDataToEndOfFile()
-        return NSString(data:data, encoding:NSUTF8StringEncoding)
+        return NSString(data:data, encoding:NSUTF8StringEncoding)!
     } else {
         return readFile(arguments[0])
     }
 }()
 
 let parsed: [Piece] = parseContents(contents)
-let allPieces = parsed + arguments.flatMap { filename in
+let otherPieces = arguments.flatMap { filename in
     parseContents(readFile(filename))
 }
-let allNamedCode = fromList(catMaybes(catMaybes(allPieces.map(code)).map(pieceName)))
+let allPieces = parsed + otherPieces
+
+let allNamedCode = namedCode(allPieces)
 
 if swift {
   let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
@@ -61,8 +63,9 @@ if swift {
 } else if (standardLibrary) {
   println(prettyPrintContents(weave(parsed,allNamedCode)))
 } else {
+  let woven = weave(parsed,namedCode(otherPieces))
   let cwd = NSFileManager.defaultManager().currentDirectoryPath
-  let result = prettyPrintContents(evaluate(parsed, workingDirectory: cwd))
+  let result = prettyPrintContents(evaluate(woven, workingDirectory: cwd))
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
 }

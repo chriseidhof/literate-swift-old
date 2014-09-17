@@ -137,6 +137,10 @@ func |> <A, B, C>(func1: B -> C, func2: A -> B) -> (A -> C) {
     return { func1(func2($0)) }
 }
 
+func namedCode(pieces: [Piece]) -> [String:String] {
+    return fromList(catMaybes(catMaybes(pieces.map(code)).map(pieceName)))
+}
+
 func weave(pieces: [Piece]) -> [Piece] {
     let name = { piece in
         flatMap(code(piece), pieceName)
@@ -160,11 +164,8 @@ func weave(pieces: [Piece], dict: [String:String]) -> [Piece] {
         switch piece {
         case .CodeBlock(let language, let code):
             if let (name, rest) = pieceName(code) {
-                if usedNamesDict[name] == nil {
-                    return .CodeBlock(language, rest)
-                } else {
-                    return .CodeBlock(language, "")
-                }
+                let shouldReplace = usedNamesDict[name] != nil && dict[name] != nil
+                return .CodeBlock(language, shouldReplace ?  "": rest)
             } else {
                 var result = code
                 for (key,value) in dict {
