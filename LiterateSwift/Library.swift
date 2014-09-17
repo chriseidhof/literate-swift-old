@@ -91,7 +91,7 @@ func exec(#commandPath: String, #workingDirectory: String, #arguments: [String])
     
     func read(pipe: NSPipe) -> String {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        return NSString(data: data, encoding: NSUTF8StringEncoding)
+        return NSString(data: data, encoding: NSUTF8StringEncoding)!
     }
     let stdoutoutput : String = read(stdout)
     let stderroutput : String = read(stderr)

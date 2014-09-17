@@ -95,8 +95,8 @@ func ignoreOutputAndPrintStdErr(input: (output: String,stderr: String)) -> () {
     printstderr(input.stderr)
 }
 
-let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, error: nil)
-let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: nil, error: nil)
+let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, error: nil)!
+let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: nil, error: nil)!
 
 func pieceName(piece: String) -> (name: String, rest: String)? {
     let firstLine : String = piece.lines[0]
@@ -180,7 +180,7 @@ func weave(pieces: [Piece], dict: [String:String]) -> [Piece] {
 
 func stripHTMLComments(input: String) -> String {
     // only remove comments with whitespace, otherwise it might be marked directives
-    let regex = NSRegularExpression.regularExpressionWithPattern("<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)!
+    let regex = NSRegularExpression(pattern: "<!--(.*?)-->", options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: nil)!
     //if regex { println("Error: \(error)") }
     let range = NSRange(0..<countElements(input))
     return regex.stringByReplacingMatchesInString(input, options: NSMatchingOptions(0), range: range, withTemplate: "")
