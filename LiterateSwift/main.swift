@@ -30,6 +30,7 @@ let useStdIn = findArgument("stdin")
 let stripHTML = findArgument("stripComments")
 let prepareForPlayground = findArgument("playground")
 let standardLibrary = findArgument("stdlib")
+let latexResults = findArgument("latex")
 
 func readFile(filename : String) -> String {
     return String(contentsOfFile: filename, encoding: NSUTF8StringEncoding, error: nil)!
@@ -53,19 +54,21 @@ let allPieces = parsed + otherPieces
 
 let allNamedCode = namedCode(allPieces)
 
+let prettyPrintOptions = latexResults ? [PrettyPrintOption.PrintLatex] : []
+
 if swift {
   let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
   println(swiftCode)
 } else if (prepareForPlayground) {
-  let result = prettyPrintContents(playgroundPieces(weave(parsed, allNamedCode)))
+  let result = prettyPrintContents(playgroundPieces(weave(parsed, allNamedCode)), [])
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
 } else if (standardLibrary) {
-  println(prettyPrintContents(weave(parsed,allNamedCode)))
+  println(prettyPrintContents(weave(parsed,allNamedCode), prettyPrintOptions))
 } else {
   let woven = weave(parsed,namedCode(otherPieces))
   let cwd = NSFileManager.defaultManager().currentDirectoryPath
-  let result = prettyPrintContents(evaluate(woven, workingDirectory: cwd))
+  let result = prettyPrintContents(evaluate(woven, workingDirectory: cwd), prettyPrintOptions)
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
 }

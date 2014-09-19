@@ -47,7 +47,12 @@ func parseContents(input: String) -> [Piece] {
     return result
 }
 
-func prettyPrintContents(pieces: [Piece]) -> String {
+enum PrettyPrintOption : Equatable {
+    case PrintLatex
+}
+
+func prettyPrintContents(pieces: [Piece], options: [PrettyPrintOption]) -> String {
+    let printLatex = options.count > 0 // TODO
     var result = ""
     for piece in pieces {
         switch piece {
@@ -55,7 +60,11 @@ func prettyPrintContents(pieces: [Piece]) -> String {
         case .CodeBlock(let lang, let contents):
             result += "\n".join(["","```\(lang)", contents, "```",""])
         case .Evaluated(let contents):
-            result += "\n".join(["","```", contents, "```",""])
+            if printLatex {
+                result += "\n".join(["\\begin{result}", contents, "\\end{result}"])
+            } else {
+                result += "\n".join(["","```", contents, "```",""])
+            }
         }
     }
     return result
