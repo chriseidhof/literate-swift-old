@@ -47,7 +47,8 @@ let contents : String = {
 }()
 
 let parsed: [Piece] = parseContents(contents)
-let otherPieces = arguments.flatMap { filename in
+let otherFiles = Array(arguments[1..<arguments.count])
+let otherPieces = otherFiles.flatMap { filename in
     parseContents(readFile(filename))
 }
 let allPieces = parsed + otherPieces
@@ -66,9 +67,10 @@ if swift {
 } else if (standardLibrary) {
   println(prettyPrintContents(weave(parsed,allNamedCode), prettyPrintOptions))
 } else {
-  let woven = weave(parsed,namedCode(otherPieces))
+  let woven = weave(parsed,namedCode(otherPieces), stripNames: false)
   let cwd = NSFileManager.defaultManager().currentDirectoryPath
-  let result = prettyPrintContents(evaluate(woven, workingDirectory: cwd), prettyPrintOptions)
+  let evaluated = evaluate(woven, workingDirectory: cwd)
+  let result = prettyPrintContents(stripNames(evaluated), prettyPrintOptions)
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
 }

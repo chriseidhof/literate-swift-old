@@ -158,7 +158,20 @@ func weave(pieces: [Piece]) -> [Piece] {
     return weave(pieces, dict)
 }
 
-func weave(pieces: [Piece], dict: [String:String]) -> [Piece] {
+func stripNames(pieces: [Piece]) -> [Piece] {
+    return pieces.map { piece in
+        switch piece {
+        case .CodeBlock(let language, let code):
+            if let (name,rest) = pieceName(code) {
+                return .CodeBlock(language, rest)
+            }
+            return piece
+        default: return piece
+        }
+    }
+}
+
+func weave(pieces: [Piece], dict: [String:String], stripNames : Bool = true) -> [Piece] {
     let usedNames : [String] = flatMap(pieces) { piece in
         switch piece {
         case .CodeBlock(_, let code):
@@ -174,7 +187,7 @@ func weave(pieces: [Piece], dict: [String:String]) -> [Piece] {
         case .CodeBlock(let language, let code):
             if let (name, rest) = pieceName(code) {
                 let shouldReplace = usedNamesDict[name] != nil && dict[name] != nil
-                return .CodeBlock(language, shouldReplace ?  "": rest)
+                return .CodeBlock(language, shouldReplace ?  "": (stripNames ? rest : code))
             } else {
                 var result = code
                 for (key,value) in dict {
