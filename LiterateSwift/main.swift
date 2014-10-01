@@ -46,8 +46,12 @@ let contents : String = {
     }
 }()
 
+let startIndex = useStdIn ? 0 : 1 // TODO hack
+
 let parsed: [Piece] = parseContents(contents)
-let otherFiles = Array(arguments[1..<arguments.count])
+let otherFiles = Array(arguments[startIndex..<arguments.count])
+
+
 let otherPieces = otherFiles.flatMap { filename in
     parseContents(readFile(filename))
 }
@@ -61,6 +65,7 @@ if swift {
   let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
   println(swiftCode)
 } else if (prepareForPlayground) {
+
   let result = prettyPrintContents(playgroundPieces(weave(parsed, allNamedCode)), [])
   let stripped = stripHTML ? stripHTMLComments(result) : result
   println(stripped)
