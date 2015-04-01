@@ -42,6 +42,8 @@ extension Array {
     func flatMap<R>(f: T -> [R]) -> [R] {
         return self.map(f).reduce([], combine: +)
     }
+    
+    
 }
 
 func flatMap<A, B>(t: A?, f: A -> B?) -> B? {
@@ -71,7 +73,7 @@ func fromList<K: Hashable,V>(keysAndValues: [(K,V)]) -> Dictionary<K,V> {
 
 extension String {
     var range : NSRange {
-       return NSMakeRange(0, countElements(self))
+       return NSMakeRange(0, count(self))
     }
 }
 
@@ -91,7 +93,7 @@ func exec(#commandPath: String, #workingDirectory: String, #arguments: [String])
     
     func read(pipe: NSPipe) -> String {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        return NSString(data: data, encoding: NSUTF8StringEncoding)!
+        return NSString(data: data, encoding: NSUTF8StringEncoding)! as String
     }
     let stdoutoutput : String = read(stdout)
     let stderroutput : String = read(stderr)
@@ -108,5 +110,5 @@ func printstderr(s: String) {
 func unlines(lines: [String]) -> String { return "\n".join(lines) }
 
 func prefix(s: String, prefix: String) -> String {
-    return unlines(s.lines.filter { countElements($0) > 0 } .map { prefix + $0 })
+    return unlines(s.lines.filter { count($0) > 0 } .map { prefix + $0 })
 }

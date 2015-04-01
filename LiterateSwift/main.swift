@@ -17,30 +17,51 @@ if arguments.count < 1 {
     exit(-1)
 }
 
-func findArgument(name: String) -> Bool {
-    if let idx = find(arguments, "-" + name) {
-        arguments.removeAtIndex(idx)
-        return true
+let argRegEx = NSRegularExpression(pattern: "^-(.+?)(?:=(.+))?$", options: .CaseInsensitive, error: nil)!
+
+func findArgument(name: String) -> (String, String)? {
+    for arg in arguments {
+        if let match = argRegEx.matchesInString(arg, options: NSMatchingOptions(), range: arg.range).first as? NSTextCheckingResult {
+            let res: [String] = Array(1...2).map { idx in
+                let range = match.rangeAtIndex(idx)
+                if range.location != NSNotFound {
+                    return (arg as NSString).substringWithRange(range)
+                }
+                return ""
+            }
+            if res[0] == name {
+                arguments.removeAtIndex(find(arguments, arg)!)
+                return (res[0], res[1])
+            }
+        }
     }
-    return false
+    return nil
 }
 
-let swift = findArgument("swift")
-let useStdIn = findArgument("stdin")
-let stripHTML = findArgument("stripComments")
-let prepareForPlayground = findArgument("playground")
-let standardLibrary = findArgument("stdlib")
-let latexResults = findArgument("latex")
+func existsArgument(name: String) -> Bool {
+    return findArgument(name) != nil
+}
+
+let swift = existsArgument("swift")
+let useStdIn = existsArgument("stdin")
+let stripHTML = existsArgument("stripComments")
+let prepareForPlayground = existsArgument("playground")
+let standardLibrary = existsArgument("stdlib")
+let latexResults = existsArgument("latex")
+let outputPath = findArgument("o")?.1
 
 func readFile(filename : String) -> String {
-    return String(contentsOfFile: filename, encoding: NSUTF8StringEncoding, error: nil)!
+    var error: NSError?
+    let res = String(contentsOfFile: filename, encoding: NSUTF8StringEncoding, error: &error)!
+    if let e = error { println(e) }
+    return res
 }
 
 let contents : String = {
     if (useStdIn) {
         let input = NSFileHandle.fileHandleWithStandardInput()
         let data: NSData = input.readDataToEndOfFile()
-        return NSString(data:data, encoding:NSUTF8StringEncoding)!
+        return NSString(data:data, encoding:NSUTF8StringEncoding)! as String
     } else {
         return readFile(arguments[0])
     }
@@ -59,23 +80,50 @@ let allPieces = parsed + otherPieces
 
 let allNamedCode = namedCode(allPieces)
 
-let prettyPrintOptions = latexResults ? [PrettyPrintOption.PrintLatex] : []
+let prettyPrintOptions: [PrettyPrintOption] = latexResults ? [.Latex] : prepareForPlayground ? [.Playground] : []
 
+var res: String?
+var ref: String?
 if swift {
-  let swiftCode = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
-  println(swiftCode)
+    res = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
 } else if (prepareForPlayground) {
-
-  let result = prettyPrintContents(playgroundPieces(weave(parsed, allNamedCode)), [])
-  let stripped = stripHTML ? stripHTMLComments(result) : result
-  println(stripped)
+    let (pieces, referencedCode) = extractReferencedCode(parsed, allNamedCode)
+    let result = prettyPrintContents(playgroundPieces(pieces), prettyPrintOptions)
+    res = stripHTML ? stripHTMLComments(result) : result
+    ref = "\n\n".join(referencedCode.map { unlines($0) })
 } else if (standardLibrary) {
-  println(prettyPrintContents(weave(parsed,allNamedCode), prettyPrintOptions))
+    res = prettyPrintContents(weave(parsed,allNamedCode), prettyPrintOptions)
 } else {
-  let woven = weave(parsed,namedCode(otherPieces), stripNames: false)
-  let cwd = NSFileManager.defaultManager().currentDirectoryPath
-  let evaluated = evaluate(woven, workingDirectory: cwd)
-  let result = prettyPrintContents(stripNames(evaluated), prettyPrintOptions)
-  let stripped = stripHTML ? stripHTMLComments(result) : result
-  println(stripped)
+    assert(false, "Unsupported LiterateSwift mode")
 }
+
+
+func createPlayground(url: NSURL, content: String, lib: String?) {
+    let fm = NSFileManager.defaultManager()
+    fm.createDirectoryAtURL(url, withIntermediateDirectories: true, attributes: nil, error: nil)
+    let sourcesDir = url.URLByAppendingPathComponent("Sources")
+    fm.createDirectoryAtURL(sourcesDir, withIntermediateDirectories: true, attributes: nil, error: nil)
+    content.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!.writeToURL(url.URLByAppendingPathComponent("contents.swift"), atomically: true)
+    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<playground version='5.0' target-platform='osx' auto-termination-delay='10' display-mode='rendered' />".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)?.writeToURL(url.URLByAppendingPathComponent("contents.xcplayground"), atomically: true)
+    ref?.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)?.writeToURL(sourcesDir.URLByAppendingPathComponent("lib.swift"), atomically: true)
+}
+
+
+if let f = outputPath,
+    url = NSURL(fileURLWithPath: f),
+    res1 = res
+{
+    if prepareForPlayground {
+        createPlayground(url, res1, ref)
+    } else {
+        let data = res1.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
+        data.writeToFile(f, atomically: true)
+    }
+} else if let r = res {
+    println(r)
+}
+
+
+
+
+
