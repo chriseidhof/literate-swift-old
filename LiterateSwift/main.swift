@@ -84,17 +84,22 @@ let prettyPrintOptions: [PrettyPrintOption] = latexResults ? [.Latex] : prepareF
 
 var res: String?
 var ref: String?
+let usedRefs = refsInPieces(parsed)
 if swift {
     res = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
 } else if (prepareForPlayground) {
-    let (pieces, referencedCode) = extractReferencedCode(parsed, allNamedCode)
-    let result = prettyPrintContents(playgroundPieces(pieces), prettyPrintOptions)
+    let pieces = weave(parsed, allNamedCode)
+    let result = prettyPrintContents(pieces, usedRefs, prettyPrintOptions)
     res = stripHTML ? stripHTMLComments(result) : result
-    ref = "\n\n".join(referencedCode.map { unlines($0) })
 } else if (standardLibrary) {
-    res = prettyPrintContents(weave(parsed,allNamedCode), prettyPrintOptions)
+    res = prettyPrintContents(weave(parsed,allNamedCode), usedRefs, prettyPrintOptions)
 } else {
-    assert(false, "Unsupported LiterateSwift mode")
+    let woven = weave(parsed, namedCode(otherPieces))
+    let cwd = NSFileManager.defaultManager().currentDirectoryPath
+    let evaluated = evaluate(woven, workingDirectory: cwd)
+    let result = prettyPrintContents(evaluated, usedRefs, prettyPrintOptions)
+//    let result = prettyPrintContents(stripNames(evaluated), prettyPrintOptions)
+    res = stripHTML ? stripHTMLComments(result) : result
 }
 
 

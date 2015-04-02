@@ -8,15 +8,25 @@
 
 import Foundation
 
+struct CodeAttributes: Printable {
+    let language: String
+    let name: String?
+    let remove: Bool?
+
+    var description: String {
+        return "Language: \(language), name: \(name), remove: \(remove)"
+    }
+}
+
 enum Piece : Printable {
     case Text([String])
-    case CodeBlock(String, [String])
+    case CodeBlock(CodeAttributes, [String])
     case Evaluated(String)
 
     var description : String {
         switch self {
         case .Text(let s): return "Text(\(s))"
-        case .CodeBlock(let lang, let code): return "Code(\(lang), \(code))"
+        case .CodeBlock(let attr, let code): return "Code(\(attr), \(code))"
         case .Evaluated(let evaluated): return "Evaluated(\(evaluated))"
         }
     }
@@ -24,11 +34,32 @@ enum Piece : Printable {
 
 func isFencedCodeBlock(s: String) -> Bool { return s.hasPrefix("```") }
 
+let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)(!?)>>", options: nil, error: nil)!
+
+func codeName(lines: [String]) -> (name: String, remove: Bool, rest: [String])? {
+    if let firstLine = lines.first,
+        match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range)
+    {
+        let remove = match.rangeAtIndex(2).length > 0
+        let range = match.rangeAtIndex(1)
+        if range.length > 0 {
+            let name = (firstLine as NSString).substringWithRange(range)
+            let rest = Array(lines[1..<lines.count])
+            return (name: name, remove: remove, rest: rest)
+        }
+    }
+    return nil
+}
+
 func codeBlock(var lines: [String]) -> Piece? {
     if lines.count == 0 { return nil }
     let firstLine : NSString = lines.removeAtIndex(0)
     let language = firstLine.substringFromIndex(3)
-    return Piece.CodeBlock(language, lines)
+    if let (name, remove, rest) = codeName(lines) {
+        return Piece.CodeBlock(CodeAttributes(language: language, name: name, remove: remove), rest)
+    } else {
+        return Piece.CodeBlock(CodeAttributes(language: language, name: nil, remove: nil), lines)
+    }
 }
 
 func parseContents(input: String) -> [Piece] {
@@ -55,7 +86,7 @@ enum PrettyPrintOption : Equatable {
 let internalLinksRegEx = NSRegularExpression(pattern: "\\[(.+)\\]\\(#.+\\)", options: .CaseInsensitive, error: nil)!
 let playgroundSkipLines = ["<!--", "-->"]
 
-func prettyPrintContents(pieces: [Piece], options: [PrettyPrintOption]) -> String {
+func prettyPrintContents(pieces: [Piece], usedRefs: [String], options: [PrettyPrintOption]) -> String {
     let printLatex = contains(options, .Latex)
     let playground = contains(options, .Playground)
     var result = ""
@@ -75,16 +106,25 @@ func prettyPrintContents(pieces: [Piece], options: [PrettyPrintOption]) -> Strin
             } else {
                 result += unlines(s)
             }
-        case .CodeBlock(let lang, let contents) where count(unlines(contents)) > 0:
+            result += "\n"
+        case .CodeBlock(let attr, let contents) where count(unlines(contents)) > 0:
             if playground {
-                if lang == "swift" {
-                    result += unlines(["", unlines(contents), ""])
+                if attr.language == "swift" {
+                    if let name = attr.name where contains(usedRefs, name) {
+                        result += unlines(["", unlines(contents.map { "//:    \($0)" }), ""])
+                    } else {
+                        result += unlines(["", unlines(contents), ""])
+                    }
+                } else if attr.language == "print-swift" {
+                    let filteredCode = contents.filter {!$0.hasPrefix("let result___") }
+                    result += unlines(filteredCode)
                 } else {
                     result += unlines(["", unlines(contents.map { "//:    \($0)" }), ""])
                 }
             } else {
-                result += unlines(["","```\(lang)", unlines(contents), "```",""])
+                result += unlines(["","```\(attr.language)", unlines(contents), "```",""])
             }
+            result += "\n"
         case .Evaluated(let contents):
             if printLatex {
                 result += unlines(["\\begin{result}", contents, "\\end{result}"])
@@ -95,6 +135,7 @@ func prettyPrintContents(pieces: [Piece], options: [PrettyPrintOption]) -> Strin
                     result += unlines(["","```", contents, "```",""])
                 }
             }
+            result += "\n"
         default: ()
         }
     }
@@ -104,7 +145,7 @@ func prettyPrintContents(pieces: [Piece], options: [PrettyPrintOption]) -> Strin
 func codeForLanguage(lang: String, #pieces: [Piece]) -> [String] {
     return pieces.flatMap {
         switch $0 {
-        case .CodeBlock(let l, let code) where l == lang: return code
+        case .CodeBlock(let attr, let code) where attr.language == lang: return code
         default: return [""]
         }
     }
@@ -135,37 +176,19 @@ func ignoreOutputAndPrintStdErr(input: (output: String,stderr: String)) -> () {
     printstderr(input.stderr)
 }
 
-let weaveRegex = NSRegularExpression(pattern: "//\\s+<<(.*)>>", options: nil, error: nil)!
-let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: nil, error: nil)!
-
-func pieceName(piece: [String]) -> (name: String, rest: [String])? {
-    if let firstLine = piece.first,
-        match = weaveRegex.firstMatchInString(firstLine, options: nil, range: firstLine.range)
-    {
-        let range = match.rangeAtIndex(1)
-        if range.length > 0 {
-            let name = (firstLine as NSString).substringWithRange(range)
-            let rest = Array(piece[1..<piece.count])
-            return (name: name, rest: rest)
-        }
-    }
-    return nil
-}
-
-func hasName(piece: [String]) -> Bool {
-    return pieceName(piece) != nil
-}
-
-func code(piece: Piece) -> [String]? {
+func code(piece: Piece) -> Piece? {
     switch piece {
-    case .CodeBlock(_, let code): return code
+    case .CodeBlock(_, let code): return piece
     default: return nil
     }
 }
 
-func expansions(code: [String]) -> [String] {
+let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: nil, error: nil)!
+
+func refs(code: [String]) -> [String] {
     let joinedCode = unlines(code)
     let matches = expansionRegex.matchesInString(joinedCode, options: nil, range: joinedCode.range) as! [NSTextCheckingResult]
+    let foo =
     return matches.map { match in
         (joinedCode as NSString).substringWithRange(match.rangeAtIndex(1))
     }
@@ -177,75 +200,76 @@ func |> <A, B, C>(func1: B -> C, func2: A -> B) -> (A -> C) {
     return { func1(func2($0)) }
 }
 
+func codeName(piece: Piece) -> String? {
+    switch piece {
+    case .CodeBlock(let attr, _): return attr.name
+    default: return nil
+    }
+}
+
+func codeLines(piece: Piece) -> [String]? {
+    switch piece {
+    case .CodeBlock(_, let lines): return lines
+    default: return nil
+    }
+}
+
+func codeNameAndLines(piece: Piece) -> (name: String, lines: [String])? {
+    if let name = codeName(piece), lines = codeLines(piece) { return (name, lines) }
+    return nil
+}
+
 func namedCode(pieces: [Piece]) -> [String:[String]] {
-    return fromList(catMaybes(catMaybes(pieces.map(code)).map(pieceName)))
+    return fromList(catMaybes(catMaybes(pieces.map(code)).map(codeNameAndLines)))
 }
 
 func weave(pieces: [Piece]) -> [Piece] {
-    let name = { piece in
-        flatMap(code(piece), pieceName)
-    }
-    let dict = fromList(catMaybes(pieces.map(name)))
-    return weave(pieces, dict)
+    return weave(pieces, namedCode(pieces))
 }
 
-func stripNames(pieces: [Piece]) -> [Piece] {
-    return pieces.map { piece in
-        switch piece {
-        case .CodeBlock(let language, let code):
-            if let (name,rest) = pieceName(code) {
-                return .CodeBlock(language, rest)
-            }
-            return piece
-        default: return piece
-        }
-    }
+//func stripNames(pieces: [Piece]) -> [Piece] {
+//    return pieces.map { piece in
+//        switch piece {
+//        case .CodeBlock(let language, let code):
+//            if let (name,rest) = pieceName(code) {
+//                return .CodeBlock(language, rest)
+//            }
+//            return piece
+//        default: return piece
+//        }
+//    }
+//}
+
+func refsInPieces(pieces: [Piece]) -> [String] {
+    return flatMap(pieces, refsInPiece)
 }
 
-func namesInPieces(pieces: [Piece]) -> [String] {
-    return flatMap(pieces, namesInPiece)
-}
-
-func namesInPiece(piece: Piece) -> [String] {
+func refsInPiece(piece: Piece) -> [String] {
     switch piece {
-    case .CodeBlock(_, let code): return expansions(code)
+    case .CodeBlock(_, let code): return refs(code)
     default: return []
     }
 }
 
 func weave(pieces: [Piece], dict: [String: [String]]) -> [Piece] {
-    return pieces.map { weave($0, dict).0 }
+    let usedNames = refsInPieces(pieces)
+    return pieces.map { weave($0, usedNames, dict).0 }
 }
 
-func extractReferencedCode(pieces: [Piece], dict: [String: [String]]) -> ([Piece], [[String]]) {
-    return pieces.reduce(([], [])) { v, piece in
-        let parts = weave(piece, dict, inline: false)
-        return (v.0 + [parts.0], v.1 + parts.1)
-    }
-}
-
-func weave(piece: Piece, dict: [String: [String]], inline: Bool = true) -> (Piece, [[String]]) {
-    let usedNames = namesInPiece(piece)
+func weave(piece: Piece, usedNames: [String], dict: [String: [String]]) -> Piece {
     switch piece {
-    case .CodeBlock(let language, let code):
-        if let (name, rest) = pieceName(code) {
-            let shouldReplace = contains(usedNames, name) && dict[name] != nil
-            return (.CodeBlock(language, shouldReplace ?  [""]: rest), [])
-        } else {
-            var processedCode = code
-            var referencedCode: [[String]] = []
-            for (key, value) in dict {
-                let s = unlines(processedCode)
-                let keyString = "// =<<\(key)>>"
-                if let r = s.rangeOfString(keyString, options: NSStringCompareOptions(), range: nil, locale: nil) {
-                    referencedCode += [value]
-                    processedCode = s.stringByReplacingOccurrencesOfString(keyString, withString: inline ? unlines(value) : "", options: nil, range: nil).lines
-                }
+    case .CodeBlock(let attr, let code) where attr.name == nil:
+        var processedCode = code
+        for (key, value) in dict {
+            let s = unlines(processedCode)
+            let keyString = "// =<<\(key)>>"
+            if let r = s.rangeOfString(keyString, options: NSStringCompareOptions(), range: nil, locale: nil) {
+                processedCode = s.stringByReplacingOccurrencesOfString(keyString, withString: unlines(value), options: nil, range: nil).lines
             }
-            return (.CodeBlock(language, processedCode), referencedCode)
         }
+        return .CodeBlock(attr, processedCode)
     default:
-        return (piece, [])
+        return piece
     }
 }
 
@@ -268,38 +292,19 @@ func flatMap<A,B>(array: [A], f: A -> [B]) -> [B] {
 func evaluate(parsed: [Piece], #workingDirectory: String) -> [Piece] {
     return flatMap(parsed) { (piece: Piece) in
         switch piece {
-        case .CodeBlock("print-swift", let code):
+        case .CodeBlock(let attr, let code) where attr.language == "print-swift":
             let swiftCode = unlines(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
             let result = evaluateSwift(swiftCode, expression: unlines(code), workingDirectory: workingDirectory)
             let filteredCode = code.filter {!$0.hasPrefix("let result___") }
             let words = unlines(code).words
             let shouldDisplayCode = words.count > 1 || contains(words[0],"(")
-            let start = shouldDisplayCode ? [Piece.CodeBlock("swift", filteredCode)] : []
+            let start = shouldDisplayCode ? [Piece.CodeBlock(CodeAttributes(language: "swift", name: attr.name, remove: attr.remove), filteredCode)] : []
             return start + [Piece.Evaluated(prefix(result,"> "))]
-        case .CodeBlock("highlight-swift", let code):
-            return [Piece.CodeBlock("swift", code)]
-        case .CodeBlock("swift", let code):
-            if let (name, code) = pieceName(code) {
-                return [Piece.CodeBlock("swift", code)]
-            } else {
-                return [piece]
-            }
+        case .CodeBlock(let attr, let code) where attr.language == "highlight-swift":
+            return [Piece.CodeBlock(CodeAttributes(language: "swift", name: attr.name, remove: attr.remove), code)]
         default:
             return [piece]
         }
     }
 }
 
-let playgroundPieces: [Piece] -> [Piece] = { parsed in
-    parsed.map { (piece: Piece) in
-        switch piece {
-        case .CodeBlock("print-swift", let code):
-            let filteredCode = code.filter {!$0.hasPrefix("let result___") }
-            return Piece.CodeBlock("swift", filteredCode)
-        case .CodeBlock("highlight-swift", let code):
-            return Piece.CodeBlock("", code)
-        default:
-            return piece
-        }
-    }
-}
