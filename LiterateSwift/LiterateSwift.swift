@@ -140,10 +140,10 @@ func prettyPrintContents(pieces: [Piece], usedRefs: [String], options: [PrettyPr
     return result
 }
 
-func codeForLanguage(lang: String, #pieces: [Piece]) -> [String] {
+func codeForLanguage(lang: String, usedRefs: [String], #pieces: [Piece]) -> [String] {
     return pieces.flatMap {
         switch $0 {
-        case .CodeBlock(let attr, let code) where attr.language == lang: return code
+        case .CodeBlock(let attr, let code) where attr.language == lang && (attr.name == nil || !contains(usedRefs, attr.name!)): return code
         default: return [""]
         }
     }
@@ -286,11 +286,11 @@ func flatMap<A,B>(array: [A], f: A -> [B]) -> [B] {
     return result
 }
 
-func evaluate(parsed: [Piece], #workingDirectory: String) -> [Piece] {
+func evaluate(parsed: [Piece], usedRefs: [String], #workingDirectory: String) -> [Piece] {
     return flatMap(parsed) { (piece: Piece) in
         switch piece {
         case .CodeBlock(let attr, let code) where attr.language == "print-swift":
-            let swiftCode = unlines(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
+            let swiftCode = unlines(codeForLanguage("swift", usedRefs, pieces: weave(parsed, allNamedCode)))
             let result = evaluateSwift(swiftCode, expression: unlines(code), workingDirectory: workingDirectory)
             let filteredCode = code.filter {!$0.hasPrefix("let result___") }
             let words = unlines(code).words

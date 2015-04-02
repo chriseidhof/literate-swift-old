@@ -86,7 +86,7 @@ var res: String?
 var ref: String?
 let usedRefs = refsInPieces(parsed)
 if swift {
-    res = "\n".join(codeForLanguage("swift", pieces: weave(parsed, allNamedCode)))
+    res = "\n".join(codeForLanguage("swift", usedRefs, pieces: weave(parsed, allNamedCode)))
 } else if (prepareForPlayground) {
     let pieces = weave(parsed, allNamedCode)
     let result = prettyPrintContents(pieces, usedRefs, prettyPrintOptions)
@@ -96,7 +96,7 @@ if swift {
 } else {
     let woven = weave(parsed, namedCode(otherPieces))
     let cwd = NSFileManager.defaultManager().currentDirectoryPath
-    let evaluated = evaluate(woven, workingDirectory: cwd)
+    let evaluated = evaluate(woven, usedRefs, workingDirectory: cwd)
     let result = prettyPrintContents(evaluated, usedRefs, prettyPrintOptions)
 //    let result = prettyPrintContents(stripNames(evaluated), prettyPrintOptions)
     res = stripHTML ? stripHTMLComments(result) : result
@@ -114,21 +114,23 @@ func createPlayground(url: NSURL, content: String, lib: String?) {
 }
 
 
-if let f = outputPath,
-    url = NSURL(fileURLWithPath: f),
-    res1 = res
-{
-    if prepareForPlayground {
-        createPlayground(url, res1, ref)
-    } else {
-        let data = res1.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
-        data.writeToFile(f, atomically: true)
-    }
-} else if let r = res {
-    println(r)
-}
-
-
+println(res!)
+//
+//if let f = outputPath,
+//    url = NSURL(fileURLWithPath: f),
+//    res1 = res
+//{
+//    if prepareForPlayground {
+//        createPlayground(url, res1, ref)
+//    } else {
+//        let data = res1.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
+//        data.writeToFile(f, atomically: true)
+//    }
+//} else if let r = res {
+//    println(r)
+//}
+//
+//
 
 
 
