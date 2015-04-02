@@ -114,23 +114,22 @@ func createPlayground(url: NSURL, content: String, lib: String?) {
 }
 
 
-println(res!)
-//
-//if let f = outputPath,
-//    url = NSURL(fileURLWithPath: f),
-//    res1 = res
-//{
-//    if prepareForPlayground {
-//        createPlayground(url, res1, ref)
-//    } else {
-//        let data = res1.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
-//        data.writeToFile(f, atomically: true)
-//    }
-//} else if let r = res {
-//    println(r)
-//}
-//
-//
+
+if let f = outputPath,
+    url = NSURL(fileURLWithPath: f),
+    res1 = res
+{
+    if prepareForPlayground {
+        createPlayground(url, res1, ref)
+    } else {
+        let data = res1.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
+        data.writeToFile(f, atomically: true)
+    }
+} else if let r = res {
+    println(r)
+}
+
+
 
 
 
