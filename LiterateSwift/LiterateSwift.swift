@@ -106,12 +106,11 @@ func prettyPrintContents(pieces: [Piece], usedRefs: [String], options: [PrettyPr
             } else {
                 result += unlines(s)
             }
-            result += "\n"
         case .CodeBlock(let attr, let contents) where count(unlines(contents)) > 0:
             if playground {
                 if attr.language == "swift" {
                     if let name = attr.name where contains(usedRefs, name) {
-                        result += unlines(["", unlines(contents.map { "//:    \($0)" }), ""])
+                        result += unlines(["//:", unlines(contents.map { "//:    \($0)" }), "//:"])
                     } else {
                         result += unlines(["", unlines(contents), ""])
                     }
@@ -119,12 +118,11 @@ func prettyPrintContents(pieces: [Piece], usedRefs: [String], options: [PrettyPr
                     let filteredCode = contents.filter {!$0.hasPrefix("let result___") }
                     result += unlines(filteredCode)
                 } else {
-                    result += unlines(["", unlines(contents.map { "//:    \($0)" }), ""])
+                    result += unlines(["//:", unlines(contents.map { "//:    \($0)" }), "//:"])
                 }
             } else {
                 result += unlines(["","```\(attr.language)", unlines(contents), "```",""])
             }
-            result += "\n"
         case .Evaluated(let contents):
             if printLatex {
                 result += unlines(["\\begin{result}", contents, "\\end{result}"])
@@ -135,9 +133,9 @@ func prettyPrintContents(pieces: [Piece], usedRefs: [String], options: [PrettyPr
                     result += unlines(["","```", contents, "```",""])
                 }
             }
-            result += "\n"
         default: ()
         }
+        result += "\n"
     }
     return result
 }
@@ -188,7 +186,6 @@ let expansionRegex = NSRegularExpression(pattern: "//\\s+=<<(.*)>>", options: ni
 func refs(code: [String]) -> [String] {
     let joinedCode = unlines(code)
     let matches = expansionRegex.matchesInString(joinedCode, options: nil, range: joinedCode.range) as! [NSTextCheckingResult]
-    let foo =
     return matches.map { match in
         (joinedCode as NSString).substringWithRange(match.rangeAtIndex(1))
     }
